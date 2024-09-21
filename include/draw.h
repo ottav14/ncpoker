@@ -3,9 +3,19 @@
 
 #include "poker.h"
 
-void fillRect(int x, int y, int w, int h, int col);
-void fillCell(int x, int y, int col);
-void fillLine(int x1, int y1, int x2, int y2, int col);
-void drawScreen(int cols, int rows, Card** table, int card_count); 
+void drawMessage(char* message);
+void drawRect(int x, int y, int w, int h, int col);
+void drawBox(int x, int y, int w, int h, int col);
+void drawCard(int x, int y, int w, int h, Card* card);
+void drawHand(Hand hand);
+void drawBoard(Table* table);
+void drawDeck(Deck* deck);
+void drawOpponent(int x, int y, Hand hand);
+void drawOpponents(int player_count, Table* table);
+void drawScreen(Table* table, int pot); 
+void drawBetMenu();
+void drawHelp();
+void eraseHelp(Table* table, char* msg);
+void drawPotDisplay(); 
 
 #endif

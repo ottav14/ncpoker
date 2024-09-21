@@ -7,9 +7,6 @@
 #include "draw.h"
 #include "poker.h"
 
-#define PADDING_X 15
-#define PADDING_Y 1
-
 void initNCurses() {
     setlocale(LC_CTYPE, ""); 
     initscr();
@@ -18,19 +15,6 @@ void initNCurses() {
     noecho(); 
 	curs_set(0);
     keypad(stdscr, TRUE);
-}
-
-int getCol(int x, int y) {
-
-	chtype cell_content = mvwinch(stdscr, y, x);
-	return PAIR_NUMBER(cell_content & A_COLOR);
-
-}
-
-void updateCursor(int x, int y) {
-
-	move(y, x);
-
 }
 
 void initColorPairs() {
@@ -48,42 +32,98 @@ void initColorPairs() {
 
 }
 
+void toggleHelp(int* flag, Table* table, char* msg, int pot) {
+
+	*flag = !(*flag);
+	
+	if(*flag)
+		drawHelp();
+	else {
+		drawScreen(table, pot);
+		drawMessage(msg);
+	}
+		
+
+}
+
 int main() {
 
-
+	srand(time(NULL));
 	initNCurses();
 	initColorPairs();
-	srand(time(NULL));
 
-	int rows, cols;
-    getmaxyx(stdscr, rows, cols);
+	int help_mode = false;
+	int pot = 0;
+	int gamestate = 0;
+	char* msg = "Press 'Space' to reveal your cards, press '?' for help.";
 
 
-	Card** deck = createDeck();
+	Deck* deck = createDeck();
 
-	Card** deal = fullDeal(deck);
+	Table* table = fullDeal(deck);
 
-	int card_count = 5;
-	Card** table = fullDeal(deck);
+	drawScreen(table, pot);
+	drawMessage(msg);
 
-	drawScreen(cols, rows, table, card_count);
-	updateCursor(cols / 2, rows / 2);
+	refresh();
+
+
 
 	// Input loop
 	char ch;
 	while((ch = getch()) != 'q') {
 		switch(ch) {
-			case 'h':
-				updateCursor(-1, 0);
+			case ' ':
+				switch(gamestate) {
+					case 0:
+						drawScreen(table, pot);
+						revealCard(table, 0, pot);
+						revealCard(table, 1, pot);
+						gamestate++;
+						break;
+					case 1:
+						revealCard(table, 2, pot);
+						revealCard(table, 3, pot);
+						revealCard(table, 4, pot);
+						gamestate++;
+						break;
+					case 2:
+						revealCard(table, 5, pot);
+						gamestate++;
+						break;
+					case 3:
+						revealCard(table, 6, pot);
+						gamestate++;
+						break;
+					case 4:
+						for(int i=0; i<8; i++)
+							revealCard(table, 7+i, pot);
+						
+						int winner = 1;
+						if(!winner)
+							msg = "You won!";
+						else
+							msg = "You lost :(";
+						drawMessage(msg);
+						gamestate++;
+						break;
+				}
 				break;
-			case 'j':
-				updateCursor(0, -1);
+			case '?':
+				toggleHelp(&help_mode, table, msg, pot);
 				break;
-			case 'k':
-				updateCursor(0, 1);
+			case 'b':
+				if(gamestate > 0)
+					placeBet(&pot, table);
 				break;
-			case 'l':
-				updateCursor(1, 0);
+			case 'r':
+				if(gamestate == 5) {
+					gamestate = 0;
+					deck = createDeck();
+					table = fullDeal(deck);
+					pot = 0;
+					drawScreen(table, pot);
+				}
 				break;
 		}
         refresh();
